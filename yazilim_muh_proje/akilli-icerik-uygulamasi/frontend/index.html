@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akıllı Veri Analizi Sistemi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .analysis-card {
+            transition: transform 0.2s;
+        }
+        .analysis-card:hover {
+            transform: translateY(-5px);
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .result-section {
+            display: none;
+        }
+        .visualization-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .insight-card {
+            border-left: 4px solid #007bff;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>
+                Akıllı Veri Analizi
+            </a>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-user"></i> Profil</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Dosya Yükleme Bölümü -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card analysis-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>
+                            Veri Dosyası Yükle ve Analiz Et
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="fileInput" class="form-label">
+                                    Desteklenen formatlar: CSV, Excel (.xlsx, .xls), PDF, XML
+                                </label>
+                                <input type="file" class="form-control" id="fileInput" name="file" 
+                                       accept=".csv,.xlsx,.xls,.pdf,.xml" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Analizi Başlat
+                            </button>
+                        </form>
+                        
+                        <div class="loading-spinner text-center mt-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Analiz yapılıyor...</span>
+                            </div>
+                            <p class="mt-2">Veri analizi yapılıyor, lütfen bekleyin...</p>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analiz Sonuçları -->
+        <div id="results" class="result-section">
+            <!-- Genel Özet -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Analiz Özeti
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="summaryCards">
+                                <!-- Dinamik olarak doldurulacak -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Veri Türü ve Kalite -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card insight-card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-database me-2"></i>
+                                Veri Türü Değerlendirmesi
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p id="dataTypeAssessment">Analiz bekleniyor...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card insight-card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Veri Kalitesi
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="dataQualityMetrics">Analiz bekleniyor...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anahtar Bulgular -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-key me-2"></i>
+                                Anahtar Bulgular
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul id="keyFindings" class="list-group list-group-flush">
+                                <!-- Dinamik olarak doldurulacak -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Görselleştirmeler -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>
+                                Veri Görselleştirmeleri
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="visualizations" class="row">
+                                <!-- Dinamik olarak doldurulacak -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk ve Fırsatlar -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Risk Faktörleri
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul id="riskFactors" class="list-group list-group-flush">
+                                <!-- Dinamik olarak doldurulacak -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Fırsatlar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul id="opportunities" class="list-group list-group-flush">
+                                <!-- Dinamik olarak doldurülacak -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Öneriler -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Eylem Önerileri
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul id="recommendations" class="list-group">
+                                <!-- Dinamik olarak doldurulacak -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p>&copy; 2025 Akıllı Veri Analizi Sistemi. Tüm hakları saklıdır.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        // Progress bar animasyonu
+        function animateProgressBar() {
+            const progressBar = document.querySelector('.progress-bar');
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 90) {
+                    clearInterval(interval);
+                } else {
+                    width += Math.random() * 15;
+                    progressBar.style.width = width + '%';
+                }
+            }, 500);
+            
+            return interval;
+        }
+        
+        // Form submit handler
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Lütfen bir dosya seçin!');
+                return;
+            }
+            
+            // Loading göster
+            document.querySelector('.loading-spinner').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            const progressInterval = animateProgressBar();
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`${API_BASE}/analysis/upload`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer dummy-token' // Demo için
+                    }
+                });
+                
+                const result = await response.json();
+                
+                clearInterval(progressInterval);
+                document.querySelector('.progress-bar').style.width = '100%';
+                
+                setTimeout(() => {
+                    document.querySelector('.loading-spinner').style.display = 'none';
+                    
+                    if (result.message === 'Analiz başarıyla tamamlandı!') {
+                        displayResults(result.analysis);
+                    } else {
+                        alert('Analiz hatası: ' + (result.error || result.message));
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                document.querySelector('.loading-spinner').style.display = 'none';
+                console.error('Error:', error);
+                alert('Bağlantı hatası: ' + error.message);
+            }
+        });
+        
+        function displayResults(analysis) {
+            // Sonuç bölümünü göster
+            document.getElementById('results').style.display = 'block';
+            
+            // Özet kartları
+            displaySummaryCards(analysis);
+            
+            // Python analizi varsa onu kullan, yoksa AI analizini kullan
+            const data = analysis.pythonAnalysis || analysis.aiAnalysis || {};
+            
+            // Veri türü değerlendirmesi
+            if (analysis.pythonAnalysis && analysis.pythonAnalysis.insights) {
+                document.getElementById('dataTypeAssessment').textContent = 
+                    analysis.pythonAnalysis.insights.data_type_assessment || 'Belirtilmemiş';
+                
+                // Anahtar bulgular
+                displayList('keyFindings', analysis.pythonAnalysis.insights.key_findings || []);
+                
+                // Risk faktörleri
+                displayList('riskFactors', analysis.pythonAnalysis.insights.risk_factors || []);
+                
+                // Fırsatlar
+                displayList('opportunities', analysis.pythonAnalysis.insights.opportunities || []);
+                
+                // Öneriler
+                displayList('recommendations', analysis.pythonAnalysis.insights.recommendations || []);
+                
+                // Veri kalitesi
+                displayDataQuality(analysis.pythonAnalysis.statistics);
+            } else if (data.analiz) {
+                // AI analizi sonuçları
+                document.getElementById('dataTypeAssessment').textContent = 
+                    data.analiz.veriTuru || 'Belirtilmemiş';
+                
+                displayList('keyFindings', data.analiz.kiritikBulgular || []);
+                displayList('recommendations', data.analiz.aksiyonOnerileri || []);
+            }
+            
+            // Görselleştirmeleri göster
+            if (analysis.pythonAnalysis && analysis.pythonAnalysis.visualizations) {
+                displayVisualizations(analysis.pythonAnalysis.visualizations);
+            }
+            
+            // Sayfa başına scroll
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function displaySummaryCards(analysis) {
+            const container = document.getElementById('summaryCards');
+            const originalData = analysis.originalData;
+            
+            container.innerHTML = `
+                <div class="col-md-3">
+                    <div class="card metric-card text-center">
+                        <div class="card-body">
+                            <h4>${originalData.rowCount || 0}</h4>
+                            <small>Toplam Satır</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card text-center">
+                        <div class="card-body">
+                            <h4>${originalData.headers ? originalData.headers.length : 0}</h4>
+                            <small>Toplam Kolon</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card text-center">
+                        <div class="card-body">
+                            <h4>${analysis.analysisType || 'Standart'}</h4>
+                            <small>Analiz Türü</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card metric-card text-center">
+                        <div class="card-body">
+                            <h4><i class="fas fa-check"></i></h4>
+                            <small>Durum: Tamamlandı</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function displayList(elementId, items) {
+            const container = document.getElementById(elementId);
+            if (!items || items.length === 0) {
+                container.innerHTML = '<li class="list-group-item">Veri bulunamadı</li>';
+                return;
+            }
+            
+            container.innerHTML = items.map(item => 
+                `<li class="list-group-item">${item}</li>`
+            ).join('');
+        }
+        
+        function displayDataQuality(statistics) {
+            const container = document.getElementById('dataQualityMetrics');
+            
+            if (!statistics || !statistics.data_quality) {
+                container.innerHTML = 'Veri kalitesi bilgisi mevcut değil';
+                return;
+            }
+            
+            const quality = statistics.data_quality;
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Eksiksizlik Skoru:</strong><br>
+                        <span class="badge bg-primary">${quality.completeness_score?.toFixed(1) || 0}%</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Duplicate Satırlar:</strong><br>
+                        <span class="badge bg-warning">${quality.duplicate_rows || 0}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function displayVisualizations(visualizations) {
+            const container = document.getElementById('visualizations');
+            
+            if (!visualizations || !visualizations.recommended_charts) {
+                container.innerHTML = '<div class="col-12"><p>Görselleştirme önerisi mevcut değil</p></div>';
+                return;
+            }
+            
+            const charts = visualizations.recommended_charts;
+            container.innerHTML = charts.map((chart, index) => `
+                <div class="col-md-6 mb-3">
+                    <div class="visualization-container">
+                        <h6>${chart.title}</h6>
+                        <p class="text-muted">${chart.description}</p>
+                        <div class="chart-container">
+                            <canvas id="chart${index}"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Chart.js ile grafikleri oluştur (demo veriler)
+            charts.forEach((chart, index) => {
+                createDemoChart(`chart${index}`, chart.type);
+            });
+        }
+        
+        function createDemoChart(canvasId, type) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            // Demo veriler
+            const demoData = {
+                labels: ['Kategori 1', 'Kategori 2', 'Kategori 3', 'Kategori 4', 'Kategori 5'],
+                datasets: [{
+                    label: 'Demo Veri',
+                    data: [12, 19, 3, 5, 2],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 205, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            
+            new Chart(ctx, {
+                type: type === 'histogram' ? 'bar' : (type === 'heatmap' ? 'bar' : type),
+                data: demoData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: type !== 'pie' && type !== 'doughnut' ? {
+                        y: {
+                            beginAtZero: true
+                        }
+                    } : {}
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
