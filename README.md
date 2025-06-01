@@ -1,4 +1,4 @@
-🚀 Akıllı İçerik Analiz ve Üretim Uygulaması
+# 🚀 Akıllı İçerik Analiz ve Üretim Uygulaması
 
 Bu uygulama, kullanıcıların dosya yükleyerek veri analizleri yaptırabildiği, bu analizlerden profesyonel raporlar oluşturabildiği ve ayrıca çeviri ya da e-posta yazımı gibi üretkenlik araçlarını kullanabildiği modüler bir sistemdir.
 
