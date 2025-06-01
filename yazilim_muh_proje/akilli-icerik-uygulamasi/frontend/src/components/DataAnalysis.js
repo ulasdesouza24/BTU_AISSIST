@@ -210,43 +210,43 @@ const DataAnalysis = () => {
       </div>
 
       {/* Analiz Sonuçları */}
-      {analysis && analysis.aiAnalysis && (
+      {analysis && (
         <div className="space-y-6">
           {/* Analiz Metni - Yeni JSON formatı */}
-          {typeof analysis.aiAnalysis === 'object' && analysis.aiAnalysis.analiz ? (
+          {typeof analysis === 'object' && analysis.analiz ? (
             <>
               {/* Genel Bilgiler */}
               <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                 <h3 className="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-                  🔍 {analysis.aiAnalysis.analiz.veriTuru}
+                  🔍 {analysis.analiz.veriTuru}
                 </h3>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="bg-blue-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-blue-800 mb-2">📊 Genel Özet</h4>
-                    <p className="text-blue-700">{analysis.aiAnalysis.analiz.genelOzet}</p>
+                    <p className="text-blue-700">{analysis.analiz.genelOzet}</p>
                   </div>
                   
                   <div className="bg-green-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-green-800 mb-2">🔬 Detaylı Analiz</h4>
-                    <p className="text-green-700">{analysis.aiAnalysis.analiz.derinAnaliz}</p>
+                    <p className="text-green-700">{analysis.analiz.derinAnaliz}</p>
                   </div>
                 </div>
 
                 {/* Veri Kalitesi */}
-                {analysis.aiAnalysis.analiz.veriKalitesi && (
+                {analysis.analiz.veriKalitesi && (
                   <div className="mt-6 bg-indigo-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-indigo-800 mb-2">🎯 Veri Kalitesi Değerlendirmesi</h4>
-                    <p className="text-indigo-700">{analysis.aiAnalysis.analiz.veriKalitesi}</p>
+                    <p className="text-indigo-700">{analysis.analiz.veriKalitesi}</p>
                   </div>
                 )}
 
                 {/* Kritik Bulgular */}
-                {analysis.aiAnalysis.analiz.kiritikBulgular && (
+                {analysis.analiz.kiritikBulgular && (
                   <div className="mt-6 bg-red-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-red-800 mb-3">🚨 Kritik Bulgular</h4>
                     <ul className="space-y-2">
-                      {analysis.aiAnalysis.analiz.kiritikBulgular.map((bulgu, index) => (
+                      {analysis.analiz.kiritikBulgular.map((bulgu, index) => (
                         <li key={index} className="flex items-start text-red-700">
                           <span className="mr-2 text-red-500">⚡</span>
                           {bulgu}
@@ -257,83 +257,83 @@ const DataAnalysis = () => {
                 )}
 
                 {/* Kategorik Analiz */}
-                {analysis.aiAnalysis.analiz.kategorikAnaliz && (
+                {analysis.analiz.kategorikAnaliz && (
                   <div className="mt-6 bg-violet-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-violet-800 mb-2">📊 Kategorik Segmentasyon</h4>
-                    <p className="text-violet-700">{analysis.aiAnalysis.analiz.kategorikAnaliz}</p>
+                    <p className="text-violet-700">{analysis.analiz.kategorikAnaliz}</p>
                   </div>
                 )}
-
+                
                 {/* Performans Analizi */}
-                {analysis.aiAnalysis.analiz.performansAnlizi && (
+                {analysis.analiz.performansAnlizi && (
                   <div className="mt-6 bg-blue-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-blue-800 mb-2">🏆 Performans Analizi</h4>
-                    <p className="text-blue-700">{analysis.aiAnalysis.analiz.performansAnlizi}</p>
+                    <p className="text-blue-700">{analysis.analiz.performansAnlizi}</p>
                   </div>
                 )}
 
                 {/* Makas Analizi */}
-                {analysis.aiAnalysis.analiz.makasAnalizi && (
+                {analysis.analiz.makasAnalizi && (
                   <div className="mt-6 bg-pink-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-pink-800 mb-2">📏 Makas Analizi</h4>
-                    <p className="text-pink-700">{analysis.aiAnalysis.analiz.makasAnalizi}</p>
+                    <p className="text-pink-700">{analysis.analiz.makasAnalizi}</p>
                   </div>
                 )}
 
                 {/* Segmentasyon Bulguları */}
-                {analysis.aiAnalysis.analiz.segmentasyonBulguları && (
+                {analysis.analiz.segmentasyonBulguları && (
                   <div className="mt-6 bg-emerald-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-emerald-800 mb-2">🎯 Segmentasyon Bulguları</h4>
-                    <p className="text-emerald-700">{analysis.aiAnalysis.analiz.segmentasyonBulguları}</p>
+                    <p className="text-emerald-700">{analysis.analiz.segmentasyonBulguları}</p>
                   </div>
                 )}
 
                 {/* Rekabet Analizi */}
-                {analysis.aiAnalysis.analiz.rekabetAnalizi && (
+                {analysis.analiz.rekabetAnalizi && (
                   <div className="mt-6 bg-slate-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-slate-800 mb-2">⚔️ Rekabet Analizi</h4>
-                    <p className="text-slate-700">{analysis.aiAnalysis.analiz.rekabetAnalizi}</p>
+                    <p className="text-slate-700">{analysis.analiz.rekabetAnalizi}</p>
                   </div>
                 )}
-
+                
                 {/* Bağlantılar ve İlişkiler */}
-                {analysis.aiAnalysis.analiz.baglantilarVeIliskiler && (
+                {analysis.analiz.baglantilarVeIliskiler && (
                   <div className="mt-6 bg-purple-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-purple-800 mb-2">🔗 Veri İlişkileri ve Bağlantılar</h4>
-                    <p className="text-purple-700">{analysis.aiAnalysis.analiz.baglantilarVeIliskiler}</p>
+                    <p className="text-purple-700">{analysis.analiz.baglantilarVeIliskiler}</p>
                   </div>
                 )}
 
                 {/* Trend Analizi */}
-                {analysis.aiAnalysis.analiz.trendAnalizi && (
+                {analysis.analiz.trendAnalizi && (
                   <div className="mt-6 bg-cyan-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-cyan-800 mb-2">📈 Trend Analizi</h4>
-                    <p className="text-cyan-700">{analysis.aiAnalysis.analiz.trendAnalizi}</p>
+                    <p className="text-cyan-700">{analysis.analiz.trendAnalizi}</p>
                   </div>
                 )}
 
                 {/* Anomali Tespiti */}
-                {analysis.aiAnalysis.analiz.anomaliTespit && (
+                {analysis.analiz.anomaliTespit && (
                   <div className="mt-6 bg-orange-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-orange-800 mb-2">⚠️ Anomali Tespiti</h4>
-                    <p className="text-orange-700">{analysis.aiAnalysis.analiz.anomaliTespit}</p>
+                    <p className="text-orange-700">{analysis.analiz.anomaliTespit}</p>
                   </div>
                 )}
 
                 {/* Risk ve Fırsat Analizi - Yeni format */}
-                {analysis.aiAnalysis.analiz.riskFirsatAnalizi && (
+                {analysis.analiz.riskFirsatAnalizi && (
                   <div className="mt-6 bg-amber-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-amber-800 mb-2">⚖️ Risk ve Fırsat Analizi</h4>
-                    <p className="text-amber-700">{analysis.aiAnalysis.analiz.riskFirsatAnalizi}</p>
+                    <p className="text-amber-700">{analysis.analiz.riskFirsatAnalizi}</p>
                   </div>
                 )}
 
                 {/* Öngörüler */}
-                {analysis.aiAnalysis.analiz.ongoruler && (
+                {analysis.analiz.ongoruler && (
                   <div className="mt-6 bg-teal-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-teal-800 mb-3">🔮 Öngörüler ve Projeksiyonlar</h4>
                     <ul className="space-y-2">
-                      {analysis.aiAnalysis.analiz.ongoruler.map((onggoru, index) => (
+                      {analysis.analiz.ongoruler.map((onggoru, index) => (
                         <li key={index} className="flex items-start text-teal-700">
                           <span className="mr-2 text-teal-500">🎯</span>
                           {onggoru}
@@ -344,11 +344,11 @@ const DataAnalysis = () => {
                 )}
 
                 {/* Aksiyon Önerileri */}
-                {analysis.aiAnalysis.analiz.aksiyonOnerileri && (
+                {analysis.analiz.aksiyonOnerileri && (
                   <div className="mt-6 bg-emerald-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-emerald-800 mb-3">🚀 Aksiyon Önerileri</h4>
                     <ul className="space-y-2">
-                      {analysis.aiAnalysis.analiz.aksiyonOnerileri.map((aksiyon, index) => (
+                      {analysis.analiz.aksiyonOnerileri.map((aksiyon, index) => (
                         <li key={index} className="flex items-start text-emerald-700">
                           <span className="mr-2 text-emerald-500">✅</span>
                           {aksiyon}
@@ -357,21 +357,21 @@ const DataAnalysis = () => {
                     </ul>
                   </div>
                 )}
-
+                
                 {/* Riskler ve Fırsatlar - Eski format için backward compatibility */}
-                {analysis.aiAnalysis.analiz.risklerveFirsatlar && (
+                {analysis.analiz.risklerveFirsatlar && (
                   <div className="mt-6 bg-amber-50 rounded-lg p-4">
-                    <h4 className="text-lg font-semibold text-amber-800 mb-2">⚖️ Riskler ve Fırsatlar</h4>
-                    <p className="text-amber-700">{analysis.aiAnalysis.analiz.risklerveFirsatlar}</p>
+                     <h4 className="text-lg font-semibold text-amber-800 mb-2">⚖️ Riskler ve Fırsatlar</h4>
+                    <p className="text-amber-700">{analysis.analiz.risklerveFirsatlar}</p>
                   </div>
                 )}
-
+                
                 {/* Çıkarımlar - Eski format için backward compatibility */}
-                {analysis.aiAnalysis.analiz.cikarimlar && (
+                {analysis.analiz.cikarimlar && (
                   <div className="mt-6 bg-yellow-50 rounded-lg p-4">
                     <h4 className="text-lg font-semibold text-yellow-800 mb-3">💡 Ana Bulgular ve Öneriler</h4>
                     <ul className="space-y-2">
-                      {analysis.aiAnalysis.analiz.cikarimlar.map((cikarim, index) => (
+                      {analysis.analiz.cikarimlar.map((cikarim, index) => (
                         <li key={index} className="flex items-start text-yellow-700">
                           <span className="mr-2">✓</span>
                           {cikarim}
@@ -384,19 +384,19 @@ const DataAnalysis = () => {
                 {/* Sonuç */}
                 <div className="mt-6 bg-gray-50 rounded-lg p-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-2">🎯 Genel Sonuç</h4>
-                  <p className="text-gray-700">{analysis.aiAnalysis.analiz.sonuc}</p>
+                  <p className="text-gray-700">{analysis.analiz.sonuc}</p>
                 </div>
               </div>
 
               {/* Grafikler */}
-              {analysis.aiAnalysis.grafikler && analysis.aiAnalysis.grafikler.length > 0 && (
+              {analysis.grafikler && analysis.grafikler.length > 0 && (
                 <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                   <h3 className="text-2xl font-bold text-purple-600 mb-6 flex items-center">
                     📈 Görsel Analiz Grafikleri
                   </h3>
                   
                   <div className="grid gap-8">
-                    {analysis.aiAnalysis.grafikler.map((grafik, index) => (
+                    {analysis.grafikler.map((grafik, index) => (
                       <div key={index} className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200 shadow-sm">
                         <div className="mb-6">
                           <h4 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
@@ -407,7 +407,7 @@ const DataAnalysis = () => {
                           </h4>
                           <div className="bg-white rounded-lg p-3 mb-3">
                             <p className="text-gray-600 text-sm mb-2">
-                              <span className="font-semibold">📋 Açıklama:</span> {grafik.aciklama}
+                              <span className="font-semibold">�� Açıklama:</span> {grafik.aciklama}
                             </p>
                             <p className="text-xs text-gray-500">
                               <span className="font-semibold">📊 Veri Kaynakları:</span> {grafik.veriKaynaklari?.join(', ')}
@@ -443,25 +443,26 @@ const DataAnalysis = () => {
               )}
             </>
           ) : (
-            // Eski metin formatı için fallback
+            // Eski metin formatı için fallback veya hata mesajı
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="mr-2">📊</span>
                 Analiz Sonuçları
               </h3>
-              
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Dosya Bilgileri</h4>
-                  <p className="text-sm text-blue-800">
-                    Dosya: {analysis.fileName}
-                  </p>
-                  <p className="text-sm text-blue-800">
-                    Analiz Tarihi: {new Date(analysis.timestamp).toLocaleString('tr-TR')}
-                  </p>
-                </div>
+                {analysis && analysis.fileName && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Dosya Bilgileri</h4>
+                    <p className="text-sm text-blue-800">
+                      Dosya: {analysis.fileName}
+                    </p>
+                    <p className="text-sm text-blue-800">
+                      Analiz Tarihi: {new Date(analysis.timestamp).toLocaleString('tr-TR')}
+                    </p>
+                  </div>
+                )}
 
-                {analysis.originalData?.type === 'table' && (
+                {analysis && analysis.originalData?.type === 'table' && (
                   <div className="p-4 bg-green-50 rounded-lg">
                     <h4 className="font-medium text-green-900 mb-2">Veri Özeti</h4>
                     <p className="text-sm text-green-800">
@@ -476,7 +477,7 @@ const DataAnalysis = () => {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-2">AI Analizi</h4>
                   <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {analysis.aiAnalysis}
+                    {typeof analysis === 'string' ? analysis : "Analiz verisi uygun formatta değil veya yüklenemedi. (JSON bekleniyordu)"}
                   </div>
                 </div>
               </div>

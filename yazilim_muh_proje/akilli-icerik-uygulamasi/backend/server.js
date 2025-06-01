@@ -4,10 +4,34 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const path = require('path');
 
-// Route'ları import et
-const authRoutes = require('./routes/auth');
+// MySQL bağlantısı ÖNCE oluşturulmalı
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'akilli_icerik',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// MySQL bağlantısını test et
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error('MySQL bağlantı hatası:', err);
+    // Uygulama pool olmadan devam etmemeli, burada bir çıkış veya hata yönetimi düşünülebilir
+    // process.exit(1); 
+    return;
+  }
+  console.log('MySQL bağlantısı başarılı');
+  connection.release();
+});
+
+// Route'ları import et (fonksiyon olarak)
 const analysisRoutes = require('./routes/analysis');
 const reportRoutes = require('./routes/report');
+// Diğer route'lar (auth, translation, email) pool kullanmıyorsa olduğu gibi kalabilir
+const authRoutes = require('./routes/auth');
 const translationRoutes = require('./routes/translation');
 const emailRoutes = require('./routes/email');
 
@@ -25,27 +49,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Uploads klasörünü statik olarak sun
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// MySQL bağlantısı
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'akilli_icerik',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// MySQL bağlantısını test et
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.error('MySQL bağlantı hatası:', err);
-    return;
-  }
-  console.log('MySQL bağlantısı başarılı');
-  connection.release();
-});
 
 // Veritabanı tablolarını oluştur
 const createTables = async () => {
@@ -73,10 +76,26 @@ const createTables = async () => {
     )
   `;
 
+  const createAnalysisReportsTable = `
+    CREATE TABLE IF NOT EXISTS analysis_reports (
+      id VARCHAR(36) PRIMARY KEY, -- UUID için VARCHAR(36)
+      user_id INT NOT NULL,
+      file_name VARCHAR(255) NOT NULL,
+      original_data_summary JSON,
+      python_analysis JSON, -- Artık kullanılmayacak ama sütun kalabilir
+      ai_analysis JSON NOT NULL,
+      feedback_history JSON, -- [{ userInput: \"...\", revisedAiAnalysis: {...}, createdAt: \"...\" }] şeklinde bir dizi içerecek
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `;
+
   try {
     await pool.promise().query(createUsersTable);
     await pool.promise().query(createAnalysisTable);
-    console.log('Veritabanı tabloları oluşturuldu');
+    await pool.promise().query(createAnalysisReportsTable);
+    console.log('Veritabanı tabloları oluşturuldu veya zaten mevcut.');
   } catch (error) {
     console.error('Tablo oluşturma hatası:', error);
   }
@@ -84,12 +103,12 @@ const createTables = async () => {
 
 createTables();
 
-// Route'ları kullan
-app.use('/api/auth', authRoutes);
-app.use('/api/analysis', analysisRoutes);
-app.use('/api/report', reportRoutes);
-app.use('/api/translation', translationRoutes);
-app.use('/api/email', emailRoutes);
+// Route'ları kullan (pool'u parametre olarak geçirerek)
+app.use('/api/auth', authRoutes); // authRoutes pool kullanmıyorsa doğrudan
+app.use('/api/analysis', analysisRoutes(pool)); // analysisRoutes'a pool'u geçir
+app.use('/api/report', reportRoutes(pool)); // reportRoutes'a pool'u geçir
+app.use('/api/translation', translationRoutes); // translationRoutes pool kullanmıyorsa doğrudan
+app.use('/api/email', emailRoutes); // emailRoutes pool kullanmıyorsa doğrudan
 
 // Test endpoint'i
 app.get('/api/test', (req, res) => {
@@ -129,4 +148,9 @@ if (!fs.existsSync(uploadDir)) {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server ${PORT} portunda çalışıyor`);
-}); 
+});
+
+// pool'u dışa aktarmaya artık gerek yok, çünkü doğrudan server.js içinde kullanılıyor
+// ve route'lara parametre olarak geçiliyor.
+// module.exports = { app, pool }; 
+module.exports = { app }; // Sadece app'i export etmeniz yeterli olabilir, eğer başka bir yerden pool gerekmiyorsa 
