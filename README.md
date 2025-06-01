@@ -46,7 +46,7 @@ Proje, `akilli-icerik-uygulamasi` klasörü altında geliştirilmiştir.
 
 ### Backend
 - **Node.js & Express.js** - Server ve API
-- **MongoDB** - Veritabanı
+- **MySQL** - Veritabanı (Sequelize ORM ile)
 - **OpenAI API** - AI entegrasyonu
 - **JWT** - Token tabanlı kimlik doğrulama
 - **Multer** - Dosya yükleme
@@ -63,7 +63,7 @@ Proje, `akilli-icerik-uygulamasi` klasörü altında geliştirilmiştir.
 
 ### Gereksinimler
 - Node.js (v18+)
-- MongoDB
+- MySQL
 - OpenAI API anahtarı
 
 ### 1. Projeyi İndirin
@@ -81,7 +81,13 @@ npm install
 PORT=5000
 JWT_SECRET=your_jwt_secret_key_change_this
 OPENAI_API_KEY=your_openai_api_key_here
-MONGODB_URI=mongodb://localhost:27017/akilli_icerik_db
+
+# MySQL Veritabanı Ayarları
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_db_password
+DB_NAME=akilli_icerik_db
+DB_PORT=3306
 
 # E-posta ayarları (isteğe bağlı)
 EMAIL_HOST=smtp.gmail.com
@@ -233,6 +239,20 @@ Sorularınız için lütfen issue açın veya [email] adresinden iletişime geç
 - [ ] Analiz geçmişi
 - [ ] Tema özelleştirme
 - [ ] Mobil uygulama
+
+## 👥 Takım Üyeleri ve Görev Dağılımı
+
+### 🔧 Profesyonel Görev Dağılımı
+
+| No | Alan                         | Sorumlu      | Destek       | Temel Görevler                                                                 |
+|----|------------------------------|--------------|--------------|--------------------------------------------------------------------------------|
+| 1  | Front-End Geliştirme         | Caner        | Esra         | Kullanıcı arayüzü, Mobil uyum, Dosya yükleme, analiz sonucu ve öneri alanları |
+| 2  | Back-End Geliştirme          | Latif        | Rabia        | API geliştirme (Node.js/Express.js), Model entegrasyonu, Kullanıcı yönetimi ve doğrulama |
+| 3  | Veritabanı Tasarımı/Yönetimi | Nazmi        | Rabia        | Kullanıcı, analiz ve rapor verisi yönetimi (MySQL), Performans ve yedekleme süreçleri |
+| 4  | Yapay Zeka / ML Modül        | Yusuf Mert   | Esra         | Sınıflandırma modelleri, SMOTE, scaling, encoding işlemleri, Doğruluk artırma    |
+| 5  | Raporlama ve Görselleştirme  | Caner        | Esra         | Grafik üretimi, PDF/Excel raporlar, Öneri sistemi sonuçları                     |
+| 6  | Dokümantasyon ve Sunum       | Rabia        | Tüm ekip     | Kullanım kılavuzu, Proje sunumları, Teknik dokümantasyon                         |
+| 7  | Test ve Sürüm Kontrol        | Yusuf Mert   | Tüm ekip     | Birim testleri, entegrasyon testleri, Git sürüm takibi, Hata takibi              |
 
 ---
 
