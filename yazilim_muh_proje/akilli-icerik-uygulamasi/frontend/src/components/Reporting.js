@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Reporting = () => {
@@ -26,6 +26,16 @@ Bu rapor, sunulan verilerin detaylı analizini içermektedir.
 
 ## Sonuç
 Analiz sonuçları genel olarak pozitif eğilim göstermektedir.`;
+
+  // DataAnalysis çıktısını otomatik olarak al (localStorage üzerinden)
+  useEffect(() => {
+    if (!report) {
+      const analysisResult = localStorage.getItem('lastAnalysisResult');
+      if (analysisResult) {
+        setReport(analysisResult);
+      }
+    }
+  }, []);
 
   const handleEdit = async () => {
     if (!report.trim()) {
@@ -231,4 +241,4 @@ Analiz sonuçları genel olarak pozitif eğilim göstermektedir.`;
   );
 };
 
-export default Reporting; 
+export default Reporting;

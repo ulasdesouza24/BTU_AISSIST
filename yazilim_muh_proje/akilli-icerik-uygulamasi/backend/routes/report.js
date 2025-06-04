@@ -98,6 +98,13 @@ module.exports = function(pool) {
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
 
+      // Türkçe karakter desteği için font ekle
+      const fontPath = path.join(__dirname, '../DejaVuSans.ttf');
+      if (fs.existsSync(fontPath)) {
+        doc.registerFont('dejavu', fontPath);
+        doc.font('dejavu');
+      }
+
       doc.fontSize(20).text('Akıllı İçerik Analiz Raporu', { align: 'center' });
       doc.moveDown();
       doc.fontSize(12).text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, { align: 'right' });
@@ -108,22 +115,22 @@ module.exports = function(pool) {
       lines.forEach(line => {
         if (line.trim()) {
           if (line.startsWith('### ')) {
-            doc.fontSize(14).text(line.substring(4).trim(), { continued: false });
+            doc.fontSize(14).font('dejavu').text(line.substring(4).trim(), { continued: false });
             doc.moveDown(0.4);
           } else if (line.startsWith('## ')) {
-            doc.fontSize(16).text(line.substring(3).trim(), { underline: false, continued: false });
+            doc.fontSize(16).font('dejavu').text(line.substring(3).trim(), { underline: false, continued: false });
             doc.moveDown(0.5);
           } else if (line.startsWith('# ')) {
-            doc.fontSize(18).text(line.substring(2).trim(), { underline: true, continued: false });
+            doc.fontSize(18).font('dejavu').text(line.substring(2).trim(), { underline: true, continued: false });
             doc.moveDown(0.6);
           } else if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
-            doc.font('Helvetica-Bold').text(line.substring(2, line.length - 2).trim(), { continued: false });
-            doc.font('Helvetica'); 
+            doc.font('dejavu').font('Helvetica-Bold').text(line.substring(2, line.length - 2).trim(), { continued: false });
+            doc.font('dejavu'); 
           } else if (line.startsWith('*') && line.endsWith('*') && line.length > 2) {
-            doc.font('Helvetica-Oblique').text(line.substring(1, line.length - 1).trim(), { continued: false });
-            doc.font('Helvetica');
+            doc.font('dejavu').font('Helvetica-Oblique').text(line.substring(1, line.length - 1).trim(), { continued: false });
+            doc.font('dejavu');
           } else {
-            doc.text(line.trim(), { align: 'justify', continued: false });
+            doc.font('dejavu').text(line.trim(), { align: 'justify', continued: false });
           }
           doc.moveDown(0.3);
         }
@@ -243,29 +250,61 @@ module.exports = function(pool) {
     }
   });
 
+  // Favori raporları güncelleme endpoint'i
+  router.post('/:reportId/favorite', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const reportId = req.params.reportId;
+      const { isFavorite } = req.body;
+      if (typeof isFavorite !== 'boolean') {
+        return res.status(400).json({ message: 'isFavorite alanı boolean olmalı.' });
+      }
+      const updateQuery = 'UPDATE analysis_reports SET is_favorite = ? WHERE id = ? AND user_id = ?';
+      await pool.promise().query(updateQuery, [isFavorite, reportId, userId]);
+      res.json({ message: isFavorite ? 'Rapor favorilere eklendi.' : 'Rapor favorilerden çıkarıldı.' });
+    } catch (error) {
+      console.error('Favori güncelleme hatası (report.js /:reportId/favorite):', error);
+      res.status(500).json({ message: 'Favori güncellenirken hata oluştu.', error: error.message });
+    }
+  });
+
+  // Raporları filtreleme ve arama endpoint'i
   router.get('/my-reports', authMiddleware, async (req, res) => {
     try {
       const userId = req.user.id;
-      const query = `
-        SELECT id, file_name, created_at, updated_at, 
-               JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.veriTuru')) AS veri_turu,
-               SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.sonuc')), 1, 150) AS sonuc_ozeti_kisa 
-        FROM analysis_reports 
-        WHERE user_id = ? 
-        ORDER BY created_at DESC
-      `;
-      const [reports] = await pool.promise().query(query, [userId]);
+      const { search, onlyFavorites } = req.query;
+      let query = `SELECT id, file_name, created_at, updated_at, is_favorite,
+        JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.veriTuru')) AS veri_turu,
+        SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.sonuc')), 1, 150) AS sonuc_ozeti_kisa 
+        FROM analysis_reports WHERE user_id = ?`;
+      const params = [userId];
+      if (onlyFavorites === 'true') {
+        query += ' AND is_favorite = TRUE';
+      }
+      if (search) {
+        query += ' AND (file_name LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, "$.analiz.veriTuru")) LIKE ? )';
+        params.push(`%${search}%`, `%${search}%`);
+      }
+      query += ' ORDER BY created_at DESC';
+      const [reports] = await pool.promise().query(query, params);
       
-      res.json({
-        message: 'Geçmiş analiz raporlarınız başarıyla getirildi.',
-        reports: reports
+      // feedback_history alanı NULL ise boş dizi olarak ayarla
+      reports.forEach(r => {
+        if (r.feedback_history === null || typeof r.feedback_history === 'undefined') {
+          r.feedback_history = [];
+        } else if (typeof r.feedback_history === 'string') {
+          try {
+            r.feedback_history = JSON.parse(r.feedback_history);
+          } catch {
+            r.feedback_history = [];
+          }
+        }
       });
+
+      res.json({ message: 'Geçmiş analiz raporlarınız başarıyla getirildi.', reports });
     } catch (error) {
       console.error('Geçmiş raporları SQL getirme hatası (report.js /my-reports):', error);
-      res.status(500).json({ 
-        message: 'Raporlar getirilirken bir hata oluştu.', 
-        error: error.message 
-      });
+      res.status(500).json({ message: 'Raporlar getirilirken bir hata oluştu.', error: error.message });
     }
   });
 
@@ -413,6 +452,23 @@ module.exports = function(pool) {
           error: error.message 
         });
       }
+    }
+  });
+
+  // Analiz raporu silme endpoint'i
+  router.delete('/:reportId', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id; // Sadece kendi raporunu silebilsin diye kullanıcı ID'si alınıyor
+      const reportId = req.params.reportId; // Silinecek raporun ID'si
+      const deleteQuery = 'DELETE FROM analysis_reports WHERE id = ? AND user_id = ?'; // Kullanıcıya ait rapor silinir
+      const [result] = await pool.promise().query(deleteQuery, [reportId, userId]);
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Rapor bulunamadı veya silme yetkiniz yok.' }); // Yetkisiz veya bulunamayan rapor için hata
+      }
+      res.json({ message: 'Rapor başarıyla silindi.' }); // Başarılı silme yanıtı
+    } catch (error) {
+      console.error('Rapor silme hatası (report.js /:reportId DELETE):', error); // Hata logu
+      res.status(500).json({ message: 'Rapor silinirken hata oluştu.', error: error.message }); // Hata yanıtı
     }
   });
 

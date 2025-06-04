@@ -84,7 +84,8 @@ const createTables = async () => {
       original_data_summary JSON,
       python_analysis JSON, -- Artık kullanılmayacak ama sütun kalabilir
       ai_analysis JSON NOT NULL,
-      feedback_history JSON, -- [{ userInput: \"...\", revisedAiAnalysis: {...}, createdAt: \"...\" }] şeklinde bir dizi içerecek
+      feedback_history JSON, -- [{ userInput: "...", revisedAiAnalysis: {...}, createdAt: "..." }] şeklinde bir dizi içerecek
+      is_favorite BOOLEAN DEFAULT FALSE, -- Favori özelliği eklendi
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -141,16 +142,17 @@ app.use((req, res) => {
 const fs = require('fs');
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  fs.mkdirSync(uploadDir, { recursive: true }); // Uploads klasörü yoksa oluşturuluyor (dosya yükleme için gerekli)
 }
 
 // Server'ı başlat
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server ${PORT} portunda çalışıyor`);
+  console.log(`Server ${PORT} portunda çalışıyor`); // Sunucu başlatıldığında port bilgisi loglanıyor
 });
 
 // pool'u dışa aktarmaya artık gerek yok, çünkü doğrudan server.js içinde kullanılıyor
 // ve route'lara parametre olarak geçiliyor.
 // module.exports = { app, pool }; 
-module.exports = { app }; // Sadece app'i export etmeniz yeterli olabilir, eğer başka bir yerden pool gerekmiyorsa 
+module.exports = { app }; // Sadece app'i export etmeniz yeterli olabilir, eğer başka bir yerden pool gerekmiyorsa
+// (Yapı sadeleştirildi, pool başka yerde kullanılmıyor)

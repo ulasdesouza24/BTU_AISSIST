@@ -111,6 +111,35 @@ const DataAnalysis = () => {
     }
   };
 
+  // Analiz tamamlandığında çıktıyı localStorage'a kaydet
+  useEffect(() => {
+    if (analysis) {
+      // JSON formatlı analiz ise özet rapor metni üret
+      let raporMetni = '';
+      if (typeof analysis === 'object' && analysis.analiz) {
+        raporMetni += `# Veri Analizi Raporu\n\n`;
+        raporMetni += `## Veri Türü\n${analysis.analiz.veriTuru || ''}\n\n`;
+        raporMetni += `## Genel Özet\n${analysis.analiz.genelOzet || ''}\n\n`;
+        raporMetni += `## Detaylı Analiz\n${analysis.analiz.derinAnaliz || ''}\n\n`;
+        if (analysis.analiz.veriKalitesi) raporMetni += `## Veri Kalitesi\n${analysis.analiz.veriKalitesi}\n\n`;
+        if (analysis.analiz.kiritikBulgular) raporMetni += `## Kritik Bulgular\n- ${analysis.analiz.kiritikBulgular.join('\n- ')}\n\n`;
+        if (analysis.analiz.kategorikAnaliz) raporMetni += `## Kategorik Analiz\n${analysis.analiz.kategorikAnaliz}\n\n`;
+        if (analysis.analiz.performansAnlizi) raporMetni += `## Performans Analizi\n${analysis.analiz.performansAnlizi}\n\n`;
+        if (analysis.analiz.makasAnalizi) raporMetni += `## Makas Analizi\n${analysis.analiz.makasAnalizi}\n\n`;
+        if (analysis.analiz.segmentasyonBulguları) raporMetni += `## Segmentasyon Bulguları\n${analysis.analiz.segmentasyonBulguları}\n\n`;
+        if (analysis.analiz.rekabetAnalizi) raporMetni += `## Rekabet Analizi\n${analysis.analiz.rekabetAnalizi}\n\n`;
+        if (analysis.analiz.trendAnalizi) raporMetni += `## Trend Analizi\n${analysis.analiz.trendAnalizi}\n\n`;
+        if (analysis.analiz.riskFirsatAnalizi) raporMetni += `## Risk ve Fırsat Analizi\n${analysis.analiz.riskFirsatAnalizi}\n\n`;
+        if (analysis.analiz.ongoruler) raporMetni += `## Öngörüler\n- ${analysis.analiz.ongoruler.join('\n- ')}\n\n`;
+        if (analysis.analiz.aksiyonOnerileri) raporMetni += `## Aksiyon Önerileri\n- ${analysis.analiz.aksiyonOnerileri.join('\n- ')}\n\n`;
+        raporMetni += `## Sonuç\n${analysis.analiz.sonuc || ''}\n`;
+      } else if (typeof analysis === 'string') {
+        raporMetni = analysis;
+      }
+      localStorage.setItem('lastAnalysisResult', raporMetni);
+    }
+  }, [analysis]);
+
   return (
     <div className="space-y-6">
       {/* Başlık */}
@@ -501,4 +530,4 @@ const DataAnalysis = () => {
   );
 };
 
-export default DataAnalysis; 
+export default DataAnalysis;
