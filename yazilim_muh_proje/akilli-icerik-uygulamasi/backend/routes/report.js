@@ -1,6 +1,6 @@
 const express = require('express');
 const PDFDocument = require('pdfkit');
-const { Document, Packer, Paragraph, TextRun } = require('docx');
+const { Document, Packer, Paragraph, TextRun, ImageRun } = require('docx');
 const fs = require('fs');
 const path = require('path');
 const authMiddleware = require('../middleware/auth');
@@ -85,32 +85,26 @@ module.exports = function(pool) {
 
   router.post('/export/pdf', authMiddleware, async (req, res) => {
     try {
-      const { reportContent, fileName } = req.body;
-
+      const { reportContent, fileName, chartImages } = req.body;
       if (!reportContent || typeof reportContent !== 'string') {
         return res.status(400).json({ message: 'Geçerli rapor içeriği (string) gerekli!' });
       }
-
       const doc = new PDFDocument({bufferPages: true});
       const safeFileName = (fileName || 'rapor').replace(/[^a-z0-9\.\-_]/gi, '_');
       const outputPath = path.join(__dirname, '../uploads', `${safeFileName}-${Date.now()}.pdf`);
-      
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
-
       // Türkçe karakter desteği için font ekle
       const fontPath = path.join(__dirname, '../DejaVuSans.ttf');
       if (fs.existsSync(fontPath)) {
         doc.registerFont('dejavu', fontPath);
         doc.font('dejavu');
       }
-
       doc.fontSize(20).text('Akıllı İçerik Analiz Raporu', { align: 'center' });
       doc.moveDown();
       doc.fontSize(12).text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, { align: 'right' });
       doc.moveDown(2);
       doc.fontSize(12);
-      
       const lines = reportContent.split('\n');
       lines.forEach(line => {
         if (line.trim()) {
@@ -135,9 +129,24 @@ module.exports = function(pool) {
           doc.moveDown(0.3);
         }
       });
-
+      // --- Grafik görsellerini ekle ---
+      if (Array.isArray(chartImages) && chartImages.length > 0) {
+        doc.addPage();
+        doc.fontSize(16).text('Rapor Grafik Görselleri', { align: 'center' });
+        doc.moveDown(1);
+        chartImages.forEach((img, i) => {
+          try {
+            const base64 = img.dataUrl.split(',')[1];
+            const buffer = Buffer.from(base64, 'base64');
+            doc.image(buffer, { fit: [400, 300], align: 'center' });
+            doc.moveDown(1);
+          } catch (e) {
+            doc.fontSize(10).fillColor('red').text(`Grafik ${i + 1} eklenemedi.`, { align: 'center' });
+            doc.moveDown(0.5);
+          }
+        });
+      }
       doc.end();
-
       stream.on('finish', () => {
         res.download(outputPath, safeFileName + '.pdf', (err) => {
           if (err) {
@@ -151,7 +160,6 @@ module.exports = function(pool) {
           });
         });
       });
-
       stream.on('error', (err) => {
         console.error('PDF stream hatası (report.js /export/pdf):', err);
         if (!res.headersSent) {
@@ -159,7 +167,6 @@ module.exports = function(pool) {
         }
         fs.unlink(outputPath, () => {});
       });
-
     } catch (error) {
       console.error('PDF oluşturma genel hatası (report.js /export/pdf):', error);
       if (!res.headersSent) {
@@ -173,15 +180,12 @@ module.exports = function(pool) {
 
   router.post('/export/docx', authMiddleware, async (req, res) => {
     try {
-      const { reportContent, fileName } = req.body;
-
+      const { reportContent, fileName, chartImages } = req.body;
       if (!reportContent || typeof reportContent !== 'string') {
         return res.status(400).json({ message: 'Geçerli rapor içeriği (string) gerekli!' });
       }
-
       const safeFileName = (fileName || 'rapor').replace(/[^a-z0-9\.\-_]/gi, '_');
       const outputPath = path.join(__dirname, '../uploads', `${safeFileName}-${Date.now()}.docx`);
-      
       const children = [
         new Paragraph({
           children: [ new TextRun({ text: "Akıllı İçerik Analiz Raporu", bold: true, size: 32 }) ],
@@ -193,7 +197,6 @@ module.exports = function(pool) {
         }),
         new Paragraph({ children: [new TextRun({text: ""})] })
       ];
-
       reportContent.split('\n').forEach(line => {
         if (line.trim()) {
           let textRunOpts = { text: line.trim().replace(/[#*]/g, ''), size: 22 }; 
@@ -219,14 +222,26 @@ module.exports = function(pool) {
           children.push(new Paragraph({ children: [new TextRun(textRunOpts)] }));
         }
       });
-
+      // --- Grafik görsellerini ekle ---
+      if (Array.isArray(chartImages) && chartImages.length > 0) {
+        children.push(new Paragraph({ children: [new TextRun({ text: "Rapor Grafik Görselleri", bold: true, size: 28 })], alignment: "center" }));
+        chartImages.forEach((img, i) => {
+          try {
+            const base64 = img.dataUrl.split(',')[1];
+            const buffer = Buffer.from(base64, 'base64');
+            const image = new ImageRun({ data: buffer, transformation: { width: 400, height: 300 } });
+            children.push(new Paragraph({ children: [image], alignment: "center" }));
+            children.push(new Paragraph({ children: [new TextRun({ text: " ", size: 8 })] }));
+          } catch (e) {
+            children.push(new Paragraph({ children: [new TextRun({ text: `Grafik ${i + 1} eklenemedi.`, color: "FF0000", size: 18 })], alignment: "center" }));
+          }
+        });
+      }
       const doc = new Document({
         sections: [{ properties: {}, children: children }],
       });
-
       const buffer = await Packer.toBuffer(doc);
       fs.writeFileSync(outputPath, buffer);
-
       res.download(outputPath, safeFileName + '.docx', (err) => {
         if (err) {
           console.error('DOCX gönderme hatası (report.js /export/docx):', err);
@@ -238,7 +253,6 @@ module.exports = function(pool) {
             if (unlinkErr) console.error('DOCX dosya silme hatası (report.js /export/docx):', unlinkErr);
         });
       });
-
     } catch (error) {
       console.error('DOCX oluşturma genel hatası (report.js /export/docx):', error);
       if (!res.headersSent) {

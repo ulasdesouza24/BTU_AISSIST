@@ -65,18 +65,37 @@ Analiz sonuçları genel olarak pozitif eğilim göstermektedir.`;
     }
   };
 
+  // Grafik görsellerini Chart.js'den al
+  const getChartImages = () => {
+    // Tüm Chart.js canvaslarını seç
+    const canvases = document.querySelectorAll('canvas');
+    const images = [];
+    canvases.forEach((canvas, i) => {
+      try {
+        images.push({
+          index: i,
+          dataUrl: canvas.toDataURL('image/png')
+        });
+      } catch (e) {
+        // Bazı canvaslar cross-origin nedeniyle hata verebilir, onları atla
+      }
+    });
+    return images;
+  };
+
   const handleExport = async (format) => {
     const reportToExport = editedReport || report;
-    
     if (!reportToExport.trim()) {
       setError('Dışa aktarılacak rapor bulunamadı!');
       return;
     }
-
+    // Grafik görsellerini ekle
+    const chartImages = getChartImages();
     try {
       const response = await axios.post(`/report/export/${format}`, {
         reportContent: reportToExport,
-        fileName: fileName || 'rapor'
+        fileName: fileName || 'rapor',
+        chartImages // yeni eklenen alan
       }, {
         responseType: 'blob'
       });

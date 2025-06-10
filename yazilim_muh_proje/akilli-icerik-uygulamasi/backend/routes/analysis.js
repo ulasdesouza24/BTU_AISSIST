@@ -201,6 +201,17 @@ module.exports = function(pool) {
         return res.status(500).json({ message: 'AI (LLM) analizi gerçekleştirilemedi veya sonuç alınamadı.' });
       }
 
+      // --- GRAFİK VERİSİ DOĞRULAMA VE TEMİZLEME ---
+      if (Array.isArray(analysisResultFromAI.grafikler)) {
+        analysisResultFromAI.grafikler = analysisResultFromAI.grafikler.filter(grafik => {
+          if (!grafik.chartjsKodu || !grafik.chartjsKodu.data || !Array.isArray(grafik.chartjsKodu.data.labels)) {
+            grafik.hata = 'Eksik veya hatalı chartjsKodu';
+            return false;
+          }
+          return true;
+        });
+      }
+
       const reportId = uuidv4(); // Her analiz için benzersiz ID
       const userId = req.user.id; // Kullanıcı ID'si
       const originalDataForDB = analysisDataSummary.type === 'table' 
@@ -445,8 +456,9 @@ module.exports = function(pool) {
       return acc;
     }, {});
 
+    // Her başlık için en az 1 grafik önerisi, toplamda 5-7 farklı ve anlamlı grafik önerilmesini iste
     return `Sen uzman bir veri bilimci ve iş analisti olarak, aşağıdaki veriyi analiz et.
-  \nÖNEMLİ: İlk önce verinin ne türde olduğunu belirle (satış, gelir, personel, müşteri, finansal, operasyonel vb.) ve ona göre EN UYGUN analiz yaklaşımını uygula.\n\nHEDEF: Bu veriyi kullanacak iş insanı için EN FAYDALI içgörüleri çıkar. Verinin iş anlamını keşfet ve actionable insights sun.\n\nLütfen cevabını SADECE JSON formatında ver (markdown kod blokları kullanma):\n\n{\n  "analiz": ${JSON.stringify(analizObj, null, 2)},\n  "grafikler": [\n    {\n      "baslik": "Bu veri türü için en uygun grafik başlığı",\n      "tip": "Bu veri türü için en mantıklı grafik tipi seç: bar/line/pie/doughnut/radar/scatter",\n      "aciklama": "Bu grafik BU SPESİFİK VERİ TÜRÜ için hangi kritik iş kararını destekliyor?",\n      "chartjsKodu": {\n        "type": "Veri türüne en uygun Chart.js grafik tipi",\n        "data": {\n          "labels": ["Bu veri türü için anlamlı kategoriler/gruplar"],\n          "datasets": [{\n            "label": "Bu veri türü için anlamlı dataset adı",\n            "data": ["GERÇEK hesaplanmış değerler"],\n            "backgroundColor": ["veri türüne uygun renkler"],\n            "borderColor": "uygun kenar rengi",\n            "borderWidth": 1\n          }]\n        },\n        "options": {\n          "responsive": true,\n          "plugins": {\n            "title": {\n              "display": true,\n              "text": "Bu Veri Türü İçin Anlamlı Başlık"\n            },\n            "legend": {\n              "display": true\n            }\n          },\n          "scales": {\n            "y": {\n              "beginAtZero": true\n            }\n          }\n        }\n      },\n      "veriKaynaklari": ["kullanılan sütun adları"],\n      "isKarar": "Bu grafik için spesifik iş kararı ve aksiyon önerisi"\n    }\n  ]\n}\n\nAnaliz Edilecek Veri:\nBaşlıklar: ${promptHeaders}\nSatır Sayısı: ${promptRowCount}\n\nDETAYLI VERİ İÇERİĞİ:\n${detailedDataForPrompt}\n`;
+  \nÖNEMLİ: İlk önce verinin ne türde olduğunu belirle (satış, gelir, personel, müşteri, finansal, operasyonel vb.) ve ona göre EN UYGUN analiz yaklaşımını uygula.\n\nHEDEF: Bu veriyi kullanacak iş insanı için EN FAYDALI içgörüleri çıkar. Verinin iş anlamını keşfet ve actionable insights sun.\n\nLütfen cevabını SADECE JSON formatında ver (markdown kod blokları kullanma):\n\n{\n  "analiz": ${JSON.stringify(analizObj, null, 2)},\n  "grafikler": [\n    // Her başlık için en az 1, toplamda 5-7 farklı ve anlamlı grafik öner: farklı tiplerde, farklı iş kararlarını destekleyen, farklı veri sütunlarını kullanan\n    // Örnek: Genel dağılım, segmentasyon, trend, performans, risk, fırsat, kategorik, zaman serisi, karşılaştırma, korelasyon, vs.\n    // Her grafik için: başlık, tip, açıklama, chartjsKodu, veriKaynaklari, isKarar alanlarını doldur\n    // chartjsKodu mutlaka şu alanları içermeli: type, data, data.labels (dizi), data.datasets (dizi) ve options. Eksik olursa grafik gösterilemez!\n    // Lütfen örnek olarak: Genel Dağılım, Segmentasyon, Trend, Kategorik Dağılım, Performans, Risk/Fırsat, Karşılaştırma gibi başlıklar üret\n    // Her grafik için chartjsKodu alanı gerçekçi ve farklı olmalı\n    // Her grafik iş kararına bağlanmalı\n    // Lütfen 5-7 arası grafik öner\n  ]\n}\n\nAnaliz Edilecek Veri:\nBaşlıklar: ${promptHeaders}\nSatır Sayısı: ${promptRowCount}\n\nDETAYLI VERİ İÇERİĞİ:\n${detailedDataForPrompt}\n`;
   }
 
   return router;

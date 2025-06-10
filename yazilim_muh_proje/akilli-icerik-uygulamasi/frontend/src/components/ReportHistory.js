@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import AnalysisResultView from './AnalysisResultView';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const ReportHistory = () => {
   const { user } = useAuth();
@@ -73,6 +75,63 @@ const ReportHistory = () => {
     }
   };
 
+  // Analiz detayındaki tüm canvasları PDF'e kaydet (çok sayfalı)
+  const handleExportPDF = async () => {
+    const detailDiv = document.querySelector('.analysis-detail-area');
+    if (!detailDiv) return;
+    const canvas = await html2canvas(detailDiv, {useCORS: true, scale: 2});
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pageWidth;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    let position = 0;
+    let remainingHeight = pdfHeight;
+    let pageNum = 0;
+    const canvasHeight = canvas.height;
+    const canvasWidth = canvas.width;
+    const pageCanvasHeight = Math.floor((pageHeight * canvasWidth) / pageWidth);
+
+    while (remainingHeight > 0) {
+      // Her sayfa için yeni bir canvas oluştur
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvasWidth;
+      pageCanvas.height = Math.min(pageCanvasHeight, canvasHeight - position);
+      const ctx = pageCanvas.getContext('2d');
+      ctx.drawImage(
+        canvas,
+        0, position, canvasWidth, pageCanvas.height,
+        0, 0, canvasWidth, pageCanvas.height
+      );
+      const pageImgData = pageCanvas.toDataURL('image/png');
+      if (pageNum > 0) pdf.addPage();
+      pdf.addImage(pageImgData, 'PNG', 0, 0, pdfWidth, (pageCanvas.height * pdfWidth) / canvasWidth);
+      position += pageCanvasHeight;
+      remainingHeight -= pageHeight;
+      pageNum++;
+    }
+    pdf.save('analiz_detay.pdf');
+  };
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+  };
+
+  const handleFavoritesToggle = () => {
+    setOnlyFavorites(prev => !prev);
+  };
+
+  const handleReportClick = (reportId) => {
+    if (selectedReport && selectedReport.id === reportId) {
+      setSelectedReport(null);
+    } else {
+      handleShowDetail(reportId);
+    }
+  };
+
   return (
     <div className="report-history-container">
       <h2>Analiz Geçmişim</h2>
@@ -106,9 +165,9 @@ const ReportHistory = () => {
           </thead>
           <tbody>
             {reports.map(r => (
-              <tr key={r.id}>
+              <tr key={r.id} className={selectedReport && selectedReport.id === r.id ? 'active' : ''}>
                 <td>
-                  <button onClick={() => toggleFavorite(r.id, r.is_favorite)} style={{ color: r.is_favorite ? 'gold' : 'gray' }}>
+                  <button onClick={() => toggleFavorite(r.id, r.is_favorite)} style={{ color: r.is_favorite ? 'gold' : 'gray', fontSize: 20, background: 'none', border: 'none', cursor: 'pointer' }} title={r.is_favorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle'}>
                     ★
                   </button>
                 </td>
@@ -117,7 +176,8 @@ const ReportHistory = () => {
                 <td>{r.sonuc_ozeti_kisa}</td>
                 <td>{new Date(r.created_at).toLocaleString('tr-TR')}</td>
                 <td>
-                  <button onClick={() => handleShowDetail(r.id)} style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:4,padding:'4px 12px',cursor:'pointer'}}>Görüntüle</button>
+                  <button onClick={() => handleShowDetail(r.id)} style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:4,padding:'4px 12px',cursor:'pointer', marginRight: 8}}>Görüntüle</button>
+                  <button onClick={() => handleDelete(r.id)} style={{background:'#ef4444',color:'#fff',padding:'4px 12px',border:'none',borderRadius:4,cursor:'pointer'}}>Sil</button>
                 </td>
               </tr>
             ))}
@@ -125,12 +185,12 @@ const ReportHistory = () => {
         </table>
       )}
       {selectedReport && (
-        <div style={{marginTop:32}}>
+        <div style={{marginTop:32}} className="analysis-detail-area">
           <h3 style={{fontWeight:'bold',fontSize:20,marginBottom:16}}>Analiz Sonucu</h3>
           {detailLoading ? <div>Yükleniyor...</div> : detailError ? <div style={{color:'red'}}>{detailError}</div> : <AnalysisResultView analysis={selectedReport.analysis} />}
           <div style={{marginTop:16,display:'flex',gap:12}}>
             <button onClick={()=>setSelectedReport(null)} style={{background:'#e5e7eb',padding:'6px 18px',border:'none',borderRadius:4,cursor:'pointer'}}>Kapat</button>
-            <button onClick={()=>handleDelete(selectedReport.id)} style={{background:'#ef4444',color:'#fff',padding:'6px 18px',border:'none',borderRadius:4,cursor:'pointer'}}>Sil</button>
+            <button onClick={handleExportPDF} style={{background:'#10b981',color:'#fff',padding:'6px 18px',border:'none',borderRadius:4,cursor:'pointer'}}>PDF Olarak Kaydet</button>
           </div>
         </div>
       )}
