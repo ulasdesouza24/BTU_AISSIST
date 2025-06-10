@@ -1,6 +1,6 @@
 const express = require('express');
 const PDFDocument = require('pdfkit');
-const { Document, Packer, Paragraph, TextRun } = require('docx');
+const { Document, Packer, Paragraph, TextRun, ImageRun } = require('docx');
 const fs = require('fs');
 const path = require('path');
 const authMiddleware = require('../middleware/auth');
@@ -85,52 +85,68 @@ module.exports = function(pool) {
 
   router.post('/export/pdf', authMiddleware, async (req, res) => {
     try {
-      const { reportContent, fileName } = req.body;
-
+      const { reportContent, fileName, chartImages } = req.body;
       if (!reportContent || typeof reportContent !== 'string') {
         return res.status(400).json({ message: 'Geçerli rapor içeriği (string) gerekli!' });
       }
-
       const doc = new PDFDocument({bufferPages: true});
       const safeFileName = (fileName || 'rapor').replace(/[^a-z0-9\.\-_]/gi, '_');
       const outputPath = path.join(__dirname, '../uploads', `${safeFileName}-${Date.now()}.pdf`);
-      
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
-
+      // Türkçe karakter desteği için font ekle
+      const fontPath = path.join(__dirname, '../DejaVuSans.ttf');
+      if (fs.existsSync(fontPath)) {
+        doc.registerFont('dejavu', fontPath);
+        doc.font('dejavu');
+      }
       doc.fontSize(20).text('Akıllı İçerik Analiz Raporu', { align: 'center' });
       doc.moveDown();
       doc.fontSize(12).text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, { align: 'right' });
       doc.moveDown(2);
       doc.fontSize(12);
-      
       const lines = reportContent.split('\n');
       lines.forEach(line => {
         if (line.trim()) {
           if (line.startsWith('### ')) {
-            doc.fontSize(14).text(line.substring(4).trim(), { continued: false });
+            doc.fontSize(14).font('dejavu').text(line.substring(4).trim(), { continued: false });
             doc.moveDown(0.4);
           } else if (line.startsWith('## ')) {
-            doc.fontSize(16).text(line.substring(3).trim(), { underline: false, continued: false });
+            doc.fontSize(16).font('dejavu').text(line.substring(3).trim(), { underline: false, continued: false });
             doc.moveDown(0.5);
           } else if (line.startsWith('# ')) {
-            doc.fontSize(18).text(line.substring(2).trim(), { underline: true, continued: false });
+            doc.fontSize(18).font('dejavu').text(line.substring(2).trim(), { underline: true, continued: false });
             doc.moveDown(0.6);
           } else if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
-            doc.font('Helvetica-Bold').text(line.substring(2, line.length - 2).trim(), { continued: false });
-            doc.font('Helvetica'); 
+            doc.font('dejavu').font('Helvetica-Bold').text(line.substring(2, line.length - 2).trim(), { continued: false });
+            doc.font('dejavu'); 
           } else if (line.startsWith('*') && line.endsWith('*') && line.length > 2) {
-            doc.font('Helvetica-Oblique').text(line.substring(1, line.length - 1).trim(), { continued: false });
-            doc.font('Helvetica');
+            doc.font('dejavu').font('Helvetica-Oblique').text(line.substring(1, line.length - 1).trim(), { continued: false });
+            doc.font('dejavu');
           } else {
-            doc.text(line.trim(), { align: 'justify', continued: false });
+            doc.font('dejavu').text(line.trim(), { align: 'justify', continued: false });
           }
           doc.moveDown(0.3);
         }
       });
-
+      // --- Grafik görsellerini ekle ---
+      if (Array.isArray(chartImages) && chartImages.length > 0) {
+        doc.addPage();
+        doc.fontSize(16).text('Rapor Grafik Görselleri', { align: 'center' });
+        doc.moveDown(1);
+        chartImages.forEach((img, i) => {
+          try {
+            const base64 = img.dataUrl.split(',')[1];
+            const buffer = Buffer.from(base64, 'base64');
+            doc.image(buffer, { fit: [400, 300], align: 'center' });
+            doc.moveDown(1);
+          } catch (e) {
+            doc.fontSize(10).fillColor('red').text(`Grafik ${i + 1} eklenemedi.`, { align: 'center' });
+            doc.moveDown(0.5);
+          }
+        });
+      }
       doc.end();
-
       stream.on('finish', () => {
         res.download(outputPath, safeFileName + '.pdf', (err) => {
           if (err) {
@@ -144,7 +160,6 @@ module.exports = function(pool) {
           });
         });
       });
-
       stream.on('error', (err) => {
         console.error('PDF stream hatası (report.js /export/pdf):', err);
         if (!res.headersSent) {
@@ -152,7 +167,6 @@ module.exports = function(pool) {
         }
         fs.unlink(outputPath, () => {});
       });
-
     } catch (error) {
       console.error('PDF oluşturma genel hatası (report.js /export/pdf):', error);
       if (!res.headersSent) {
@@ -166,15 +180,12 @@ module.exports = function(pool) {
 
   router.post('/export/docx', authMiddleware, async (req, res) => {
     try {
-      const { reportContent, fileName } = req.body;
-
+      const { reportContent, fileName, chartImages } = req.body;
       if (!reportContent || typeof reportContent !== 'string') {
         return res.status(400).json({ message: 'Geçerli rapor içeriği (string) gerekli!' });
       }
-
       const safeFileName = (fileName || 'rapor').replace(/[^a-z0-9\.\-_]/gi, '_');
       const outputPath = path.join(__dirname, '../uploads', `${safeFileName}-${Date.now()}.docx`);
-      
       const children = [
         new Paragraph({
           children: [ new TextRun({ text: "Akıllı İçerik Analiz Raporu", bold: true, size: 32 }) ],
@@ -186,7 +197,6 @@ module.exports = function(pool) {
         }),
         new Paragraph({ children: [new TextRun({text: ""})] })
       ];
-
       reportContent.split('\n').forEach(line => {
         if (line.trim()) {
           let textRunOpts = { text: line.trim().replace(/[#*]/g, ''), size: 22 }; 
@@ -212,14 +222,26 @@ module.exports = function(pool) {
           children.push(new Paragraph({ children: [new TextRun(textRunOpts)] }));
         }
       });
-
+      // --- Grafik görsellerini ekle ---
+      if (Array.isArray(chartImages) && chartImages.length > 0) {
+        children.push(new Paragraph({ children: [new TextRun({ text: "Rapor Grafik Görselleri", bold: true, size: 28 })], alignment: "center" }));
+        chartImages.forEach((img, i) => {
+          try {
+            const base64 = img.dataUrl.split(',')[1];
+            const buffer = Buffer.from(base64, 'base64');
+            const image = new ImageRun({ data: buffer, transformation: { width: 400, height: 300 } });
+            children.push(new Paragraph({ children: [image], alignment: "center" }));
+            children.push(new Paragraph({ children: [new TextRun({ text: " ", size: 8 })] }));
+          } catch (e) {
+            children.push(new Paragraph({ children: [new TextRun({ text: `Grafik ${i + 1} eklenemedi.`, color: "FF0000", size: 18 })], alignment: "center" }));
+          }
+        });
+      }
       const doc = new Document({
         sections: [{ properties: {}, children: children }],
       });
-
       const buffer = await Packer.toBuffer(doc);
       fs.writeFileSync(outputPath, buffer);
-
       res.download(outputPath, safeFileName + '.docx', (err) => {
         if (err) {
           console.error('DOCX gönderme hatası (report.js /export/docx):', err);
@@ -231,7 +253,6 @@ module.exports = function(pool) {
             if (unlinkErr) console.error('DOCX dosya silme hatası (report.js /export/docx):', unlinkErr);
         });
       });
-
     } catch (error) {
       console.error('DOCX oluşturma genel hatası (report.js /export/docx):', error);
       if (!res.headersSent) {
@@ -243,29 +264,61 @@ module.exports = function(pool) {
     }
   });
 
+  // Favori raporları güncelleme endpoint'i
+  router.post('/:reportId/favorite', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const reportId = req.params.reportId;
+      const { isFavorite } = req.body;
+      if (typeof isFavorite !== 'boolean') {
+        return res.status(400).json({ message: 'isFavorite alanı boolean olmalı.' });
+      }
+      const updateQuery = 'UPDATE analysis_reports SET is_favorite = ? WHERE id = ? AND user_id = ?';
+      await pool.promise().query(updateQuery, [isFavorite, reportId, userId]);
+      res.json({ message: isFavorite ? 'Rapor favorilere eklendi.' : 'Rapor favorilerden çıkarıldı.' });
+    } catch (error) {
+      console.error('Favori güncelleme hatası (report.js /:reportId/favorite):', error);
+      res.status(500).json({ message: 'Favori güncellenirken hata oluştu.', error: error.message });
+    }
+  });
+
+  // Raporları filtreleme ve arama endpoint'i
   router.get('/my-reports', authMiddleware, async (req, res) => {
     try {
       const userId = req.user.id;
-      const query = `
-        SELECT id, file_name, created_at, updated_at, 
-               JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.veriTuru')) AS veri_turu,
-               SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.sonuc')), 1, 150) AS sonuc_ozeti_kisa 
-        FROM analysis_reports 
-        WHERE user_id = ? 
-        ORDER BY created_at DESC
-      `;
-      const [reports] = await pool.promise().query(query, [userId]);
+      const { search, onlyFavorites } = req.query;
+      let query = `SELECT id, file_name, created_at, updated_at, is_favorite,
+        JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.veriTuru')) AS veri_turu,
+        SUBSTRING(JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, '$.analiz.sonuc')), 1, 150) AS sonuc_ozeti_kisa 
+        FROM analysis_reports WHERE user_id = ?`;
+      const params = [userId];
+      if (onlyFavorites === 'true') {
+        query += ' AND is_favorite = TRUE';
+      }
+      if (search) {
+        query += ' AND (file_name LIKE ? OR JSON_UNQUOTE(JSON_EXTRACT(ai_analysis, "$.analiz.veriTuru")) LIKE ? )';
+        params.push(`%${search}%`, `%${search}%`);
+      }
+      query += ' ORDER BY created_at DESC';
+      const [reports] = await pool.promise().query(query, params);
       
-      res.json({
-        message: 'Geçmiş analiz raporlarınız başarıyla getirildi.',
-        reports: reports
+      // feedback_history alanı NULL ise boş dizi olarak ayarla
+      reports.forEach(r => {
+        if (r.feedback_history === null || typeof r.feedback_history === 'undefined') {
+          r.feedback_history = [];
+        } else if (typeof r.feedback_history === 'string') {
+          try {
+            r.feedback_history = JSON.parse(r.feedback_history);
+          } catch {
+            r.feedback_history = [];
+          }
+        }
       });
+
+      res.json({ message: 'Geçmiş analiz raporlarınız başarıyla getirildi.', reports });
     } catch (error) {
       console.error('Geçmiş raporları SQL getirme hatası (report.js /my-reports):', error);
-      res.status(500).json({ 
-        message: 'Raporlar getirilirken bir hata oluştu.', 
-        error: error.message 
-      });
+      res.status(500).json({ message: 'Raporlar getirilirken bir hata oluştu.', error: error.message });
     }
   });
 
@@ -413,6 +466,23 @@ module.exports = function(pool) {
           error: error.message 
         });
       }
+    }
+  });
+
+  // Analiz raporu silme endpoint'i
+  router.delete('/:reportId', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id; // Sadece kendi raporunu silebilsin diye kullanıcı ID'si alınıyor
+      const reportId = req.params.reportId; // Silinecek raporun ID'si
+      const deleteQuery = 'DELETE FROM analysis_reports WHERE id = ? AND user_id = ?'; // Kullanıcıya ait rapor silinir
+      const [result] = await pool.promise().query(deleteQuery, [reportId, userId]);
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Rapor bulunamadı veya silme yetkiniz yok.' }); // Yetkisiz veya bulunamayan rapor için hata
+      }
+      res.json({ message: 'Rapor başarıyla silindi.' }); // Başarılı silme yanıtı
+    } catch (error) {
+      console.error('Rapor silme hatası (report.js /:reportId DELETE):', error); // Hata logu
+      res.status(500).json({ message: 'Rapor silinirken hata oluştu.', error: error.message }); // Hata yanıtı
     }
   });
 

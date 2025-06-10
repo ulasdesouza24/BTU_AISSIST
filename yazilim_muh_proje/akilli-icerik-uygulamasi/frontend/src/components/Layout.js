@@ -6,14 +6,17 @@ const Layout = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
+  // Sol menüde gösterilecek sayfalar ve ikonlar
   const navigation = [
     { name: 'Dashboard', href: '/', icon: '🏠' },
     { name: 'Veri Analizi', href: '/analysis', icon: '📊' },
     { name: 'Raporlama', href: '/reporting', icon: '📋' },
+    { name: 'Analiz Geçmişi', href: '/report-history', icon: '🕑' }, // Analiz geçmişi menüye eklendi
     { name: 'Çeviri', href: '/translation', icon: '🌐' },
     { name: 'E-posta Yazma', href: '/email-writer', icon: '✉️' },
   ];
 
+  // Aktif menü öğesini belirler
   const isActive = (path) => {
     return location.pathname === path;
   };
@@ -28,7 +31,7 @@ const Layout = ({ children }) => {
             <h1 className="text-xl font-bold">Akıllı İçerik</h1>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation - sol menüdeki sayfa linkleri */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => (
               <Link
@@ -46,7 +49,7 @@ const Layout = ({ children }) => {
             ))}
           </nav>
 
-          {/* User Info */}
+          {/* Kullanıcı bilgisi ve çıkış butonu */}
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -72,9 +75,9 @@ const Layout = ({ children }) => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - sağda asıl içerik */}
       <div className="pl-64">
-        {/* Header */}
+        {/* Header - sayfa başlığı ve hoş geldiniz */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
@@ -90,7 +93,7 @@ const Layout = ({ children }) => {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content - children ile gelen içerik */}
         <main className="p-6">
           {children}
         </main>
@@ -99,4 +102,5 @@ const Layout = ({ children }) => {
   );
 };
 
-export default Layout; 
+export default Layout;
+// Layout bileşeni: Sol menü, kullanıcı bilgisi ve ana içerik alanı ile uygulama genel şablonunu sağlar.

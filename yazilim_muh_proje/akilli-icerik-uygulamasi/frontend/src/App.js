@@ -11,20 +11,21 @@ import Reporting from './components/Reporting';
 import Translation from './components/Translation';
 import EmailWriter from './components/EmailWriter';
 import Layout from './components/Layout';
+import ReportHistory from './components/ReportHistory';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Axios yapılandırması
-axios.defaults.baseURL = 'http://localhost:5000/api';
-axios.defaults.withCredentials = true;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+axios.defaults.baseURL = 'http://localhost:5000/api'; // API ana adresi ayarlandı
+axios.defaults.withCredentials = true; // Kimlik doğrulama için cookie desteği açıldı
+axios.defaults.headers.common['Content-Type'] = 'application/json'; // Varsayılan içerik tipi JSON
 
 // Axios interceptor ekle
 axios.interceptors.response.use(
   response => response,
   error => {
-    console.error('API Hatası:', error.response?.data || error.message);
+    console.error('API Hatası:', error.response?.data || error.message); // Tüm API hataları konsola loglanır
     return Promise.reject(error);
   }
 );
@@ -42,6 +43,7 @@ function App() {
             <Route path="/reporting" element={<ProtectedRoute><Layout><Reporting /></Layout></ProtectedRoute>} />
             <Route path="/translation" element={<ProtectedRoute><Layout><Translation /></Layout></ProtectedRoute>} />
             <Route path="/email-writer" element={<ProtectedRoute><Layout><EmailWriter /></Layout></ProtectedRoute>} />
+            <Route path="/report-history" element={<ProtectedRoute><Layout><ReportHistory /></Layout></ProtectedRoute>} />
           </Routes>
     </div>
       </Router>
