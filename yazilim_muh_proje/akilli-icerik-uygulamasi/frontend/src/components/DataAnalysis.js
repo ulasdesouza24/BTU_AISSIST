@@ -97,9 +97,51 @@ const DataAnalysis = () => {
         </div>
       );
     }
+    
+    // Responsive boyutlar için optimize edilmiş options
+    const optimizedOptions = {
+      ...chartjsKodu.options,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        ...chartjsKodu.options?.plugins,
+        legend: {
+          ...chartjsKodu.options?.plugins?.legend,
+          position: 'top',
+          labels: {
+            boxWidth: 12,
+            padding: 10,
+            font: {
+              size: 11
+            }
+          }
+        }
+      },
+      scales: chartjsKodu.type !== 'pie' && chartjsKodu.type !== 'doughnut' ? {
+        ...chartjsKodu.options?.scales,
+        x: {
+          ...chartjsKodu.options?.scales?.x,
+          ticks: {
+            font: {
+              size: 10
+            },
+            maxTicksLimit: 8
+          }
+        },
+        y: {
+          ...chartjsKodu.options?.scales?.y,
+          ticks: {
+            font: {
+              size: 10
+            }
+          }
+        }
+      } : {}
+    };
+
     const chartProps = {
       data: chartjsKodu.data,
-      options: chartjsKodu.options
+      options: optimizedOptions
     };
 
     switch (chartjsKodu.type) {
@@ -298,7 +340,13 @@ const DataAnalysis = () => {
                         <div className="mb-6">
                           <h5 className="text-md font-semibold text-blue-700 mb-2">Genel Dağılım Grafiği</h5>
                           {grafikGruplari.genel.map((grafik, i) => (
-                            <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                            <div key={i} className="mb-4">
+                              <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                  {renderChart(grafik, i)}
+                                </div>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -319,7 +367,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-violet-700 mb-2">Kategorik Dağılım Grafiği</h5>
                               {grafikGruplari.kategorik.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -335,7 +389,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-emerald-700 mb-2">Segmentasyon Grafiği</h5>
                               {grafikGruplari.segmentasyon.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -356,7 +416,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-cyan-700 mb-2">Trend Grafiği</h5>
                               {grafikGruplari.trend.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -371,7 +437,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-blue-700 mb-2">Performans Grafiği</h5>
                               {grafikGruplari.performans.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -386,7 +458,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-pink-700 mb-2">Makas Grafiği</h5>
                               {grafikGruplari.makas.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -401,7 +479,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-slate-700 mb-2">Rekabet Grafiği</h5>
                               {grafikGruplari.rekabet.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -416,7 +500,13 @@ const DataAnalysis = () => {
                             <div className="mt-4">
                               <h5 className="text-md font-semibold text-amber-700 mb-2">Risk/Fırsat Grafiği</h5>
                               {grafikGruplari.risk.map((grafik, i) => (
-                                <div key={i} className="mb-4">{renderChart(grafik, i)}</div>
+                                <div key={i} className="mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                                    <div style={{ position: 'relative', height: '280px', width: '100%' }}>
+                                      {renderChart(grafik, i)}
+                                    </div>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -510,7 +600,7 @@ const DataAnalysis = () => {
                                 )}
                               </div>
                               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-inner">
-                                <div style={{ position: 'relative', height: '400px', width: '100%' }}>
+                                <div style={{ position: 'relative', height: '320px', width: '100%' }}>
                                   {renderChart(grafik, index)}
                                 </div>
                               </div>

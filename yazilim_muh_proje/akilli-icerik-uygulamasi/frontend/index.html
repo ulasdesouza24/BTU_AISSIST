@@ -39,8 +39,8 @@
         }
         .chart-container {
             position: relative;
-            height: 400px;
-            margin: 20px 0;
+            height: 280px;
+            margin: 15px 0;
         }
     </style>
 </head>
@@ -507,12 +507,32 @@
                     plugins: {
                         legend: {
                             display: true,
-                            position: 'top'
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                font: {
+                                    size: 11
+                                }
+                            }
                         }
                     },
                     scales: type !== 'pie' && type !== 'doughnut' ? {
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 10
+                                },
+                                maxTicksLimit: 8
+                            }
+                        },
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
                         }
                     } : {}
                 }
