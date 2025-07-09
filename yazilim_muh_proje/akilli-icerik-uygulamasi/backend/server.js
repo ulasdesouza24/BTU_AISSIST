@@ -120,7 +120,7 @@ app.get('/api/test', (req, res) => {
 // Ana route
 app.get('/', (req, res) => {
   console.log('Ana sayfa çağrıldı');
-  res.json({ message: 'Akıllı İçerik Analiz ve Üretim API' });
+  res.json({ message: 'DataDoodle Analiz ve Üretim API' });
 });
 
 // Hata yakalama middleware'i

@@ -100,7 +100,7 @@ module.exports = function(pool) {
         doc.registerFont('dejavu', fontPath);
         doc.font('dejavu');
       }
-      doc.fontSize(20).text('Akıllı İçerik Analiz Raporu', { align: 'center' });
+      doc.fontSize(20).text('DataDoodle Analiz Raporu', { align: 'center' });
       doc.moveDown();
       doc.fontSize(12).text(`Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}`, { align: 'right' });
       doc.moveDown(2);
@@ -188,7 +188,7 @@ module.exports = function(pool) {
       const outputPath = path.join(__dirname, '../uploads', `${safeFileName}-${Date.now()}.docx`);
       const children = [
         new Paragraph({
-          children: [ new TextRun({ text: "Akıllı İçerik Analiz Raporu", bold: true, size: 32 }) ],
+          children: [ new TextRun({ text: "DataDoodle Analiz Raporu", bold: true, size: 32 }) ],
           alignment: "center",
         }),
         new Paragraph({

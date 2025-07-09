@@ -39,7 +39,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-            <Route path="/analysis" element={<ProtectedRoute><Layout><DataAnalysis /></Layout></ProtectedRoute>} />
+            <Route path="/data-analysis" element={<ProtectedRoute><Layout><DataAnalysis /></Layout></ProtectedRoute>} />
             <Route path="/reporting" element={<ProtectedRoute><Layout><Reporting /></Layout></ProtectedRoute>} />
             <Route path="/translation" element={<ProtectedRoute><Layout><Translation /></Layout></ProtectedRoute>} />
             <Route path="/email-writer" element={<ProtectedRoute><Layout><EmailWriter /></Layout></ProtectedRoute>} />
